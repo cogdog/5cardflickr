@@ -34,10 +34,21 @@ $cardcount = get_tbl_count($db, 'cards', "tag='$flickr_tag'");
 
 $tagline = 'As of ' . date("M d Y, h:i:s a T") . ' there have been <a href="show.php?suit=' . $suit . '">' . $storycount . ' ' . $decks[$suit]['title'] . ' Stories</a> created from the pool of <a href="photos.php?tag=' . $flickr_tag . '">' . $cardcount . ' flickr photos tagged with "' . $flickr_tag . '"</a>';
 
+// set post variables and intialize variables
+$save = $_POST['save'] ?? 'notsaved';
+$title = $_POST['title'] ?? '';
+$name = $_POST['name'] ?? '';
+$comments = $_POST['comments'] ?? '';
+$input_ids = $_POST['ids'] ?? '';
+$errors = 0;
+$error_message = '';
 
+if ($input_ids == '') {
+	$my_ids = [];
+} else {
+	$my_ids = explode(',', $input_ids);
+}
 
-// put users collected images so far into an array
-$my_ids = (isset($_POST['ids'])) ? explode(',', $_POST['ids']) : array();
 
 // page title
 
@@ -56,26 +67,26 @@ switch (count($my_ids)) {
 }
 
 // override for final story
-if ($_POST['save']) {
+if ($save = 'notsaved') {
 	// check for missing field values
 
 	// blank user name error check
-	if ( $_POST['title'] == '') { 
+	if ( $title == '') { 
 			$errors++;
 			$error_message .= '<li>Please include a title for your story.</li>';
 	}
 	
-	if ( $_POST['name'] == '') { 
+	if ( $name == '') { 
 			$errors++;
 			$error_message .= '<li>Please enter your name so you can get you all the glory and fame you deserve.</li>';
 	}
 	
-	if ( strlen($_POST['comments']) < 30 ) { 
+	if ( strlen($comments) < 30 ) { 
 			$errors++;
 			$error_message .= '<li>Hey! Where is your story? Write something that explains the sequence of pictures. You can type in at least 30 characters, right?</li>';
 	}
 	
-	if ( stripos($_POST['comments'], 'http://') !== false ) { 
+	if ( stripos($comments, 'http://') !== false ) { 
 			$errors++;
 			$error_message .= '<li>Tsk tsk tsk, URLs are not permitted. You may want to take your spamming efforts elsewhere.</li>';
 	}
@@ -85,7 +96,7 @@ if ($_POST['save']) {
 	
 	if ( $use_captcha ) {
 		// get some captcha 
-		$captcha = $_POST['g-recaptcha-response'];
+		$captcha = $_POST['g-recaptcha-response'] ?? '';
 		
 		if ( $captcha ) {
 		
@@ -186,7 +197,7 @@ if ( count($my_ids) == 5) {
 <p><strong>Pick an image to add it to your story</strong></p>
 
 <form method="post" action="<?php echo $_SERVER['PHP_SELF']?>" name="picker">
-<input type="hidden" name="ids" value="<?php echo $_POST['ids'] ?>">
+<input type="hidden" name="ids" value="<?php echo implode(",", $my_ids); ?>">
 <input type="hidden" name="tag" value="<?php echo $flickr_tag?>">
 <input type="hidden" name="suit" value="<?php echo $suit?>">
 
@@ -207,31 +218,26 @@ foreach ($new_cards as $item) {
 ?>
 <hr /></div><p><strong>flickr photo credits:</strong> <?php echo $pcredits?></p>
 
-<?php elseif (isset($_POST['save']) AND $errors==0):?>
+<?php elseif ($save='notsaved' AND $errors==0):?>
 
 
 
 <?php  
-$my_story_id = save_story($db, $_POST['ids'], $flickr_tag, $_POST['title'], $_POST['name'], $_POST['comments']); 
-mysql_close();
+$my_story_id = save_story($db, implode(",", $my_ids), $flickr_tag, $title, $name, $comments); 
+
 
 $my_link = 'http://' . $_SERVER['SERVER_NAME'] . dirname($_SERVER['PHP_SELF']) . '/show.php?id=' . $my_story_id;
 ?>
 
 <p>Your five card flickr story has been saved!
-<strong><?php echo stripslashes($_POST['title'])?></strong> <br />
-created by <strong><?php echo stripslashes($_POST['name'])?></strong> on <?php echo date("M d Y, h:i:s a")?><br />
-<em><?php echo nl2br(stripslashes($_POST['comments']))?></em></p>
+<strong><?php echo stripslashes($title)?></strong> <br />
+created by <strong><?php echo stripslashes($name)?></strong> on <?php echo date("M d Y, h:i:s a")?><br />
+<em><?php echo nl2br(stripslashes($comments))?></em></p>
 
 <h4>share this story</h4>
-<p>
-<script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
-<a href="http://twitter.com/share" class="twitter-share-button" data-text="My Five Card Flickr Story: <?php echo stripslashes($_POST['title']);?>" data-url="<?php echo $my_link?>" data-count="none" data-via="">Tweet this story.</a></p>
 
-
-
-
-
+<div class="shareopenly-button" data-url="<?php echo $my_link?>" data-text="My Five Card Flickr Story:  <?php echo stripslashes($title);?>"></div>
+<script defer src="https://shareopenly.org/js/v1/shareopenly.js"></script>
 
 <p><strong>permalink to story:</strong>  <a href="<?php echo $my_link?>"><?php echo $my_link?></a>
 
@@ -250,7 +256,7 @@ created by <strong><?php echo stripslashes($_POST['name'])?></strong> on <?php e
 <?php 
 
 
-if ($errors) {
+if ($errors > 0) {
 	echo '<ul>' . $error_message . '</ul>';
 } else {
 	echo '<p>Congratulations! Your story is complete. Would you like to save it for prosperity?</p>';
@@ -259,17 +265,17 @@ if ($errors) {
 
 
 <form method="post" action="<?php echo $_SERVER['PHP_SELF']?>" name="save">
-<input type="hidden" name="ids" value="<?php echo $_POST['ids'] ?>">
+<input type="hidden" name="ids" value="<?php echo implode(",", $my_ids); ?>">
 <input type="hidden" name="tag" value="<?php echo $flickr_tag?>">
 <input type="hidden" name="suit" value="<?php echo $suit?>">
 
 
 <h4><label for="title">Title for Story</label></h4>
-<input name="title" type="text" size="60" maxlength="72" value="<?php echo $_POST['title']?>" />
+<input name="title" type="text" size="60" maxlength="72" value="<?php echo $title?>" />
 <h4><label for="name">Your name or nickname (surely you want credit!)</label></h4>
-<input name="name" type="text"  size="60" maxlength="64" value="<?php echo $_POST['name']?>" />
+<input name="name" type="text"  size="60" maxlength="64" value="<?php echo $name?>" />
 <h4><label for="comments">Comments or explanation of story (all HTML will be stripped, URLs are not allowed)</label></h4>
-<textarea name="comments" rows="12" cols="60"><?php echo $_POST['comments']?></textarea>
+<textarea name="comments" rows="12" cols="60"><?php echo $comments?></textarea>
 
 <?php if ($use_captcha):?>
 <p>For security purposes, please enter the correct words matching the images (blame the spammers for making us do this):</p>

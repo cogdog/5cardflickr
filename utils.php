@@ -497,13 +497,16 @@ Generate the paged links for navigation
 
 function get_set_links($idx,$total,$batch,$url) {
 
+	//init
+	$links = '';
+
 	$conj = ( strchr($url,'?') ) ? '&' : '?';
 	
 	// remove any idx= in the URL string
 	$url = preg_replace('/&idx=([0-9]+)/', '', $url);
 	
 	// rewind link
-	 $first = ( !$idx || $idx <  $batch )  ? '' : '&laquo; <a href="'.$url .'">first</a> ';
+	$first = ( !$idx || $idx <  $batch )  ? '' : '&laquo; <a href="'.$url .'">first</a> ';
 
 	# set prev link
 	$prev = ( !$idx || $idx == 0 ) ? 'prev' : '<a href="'.$url.$conj.'idx='.($idx-$batch).'">prev</a>';

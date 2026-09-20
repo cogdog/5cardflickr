@@ -19,18 +19,21 @@ require_once('config.php'); 	// configuration
 
 $b= PAGER;	 // number of stories per display to show
 
-// starting point in list of stories
-if (isset($_REQUEST['idx'])) {
-	$idx = ($_REQUEST['idx']);
-	
-	if (!is_numeric($idx)) die ("Input data error 703");
-} else {
-	$idx = 0;
-}
 
-if ($_REQUEST['id']) {
-	if (!is_numeric($_REQUEST['id'])) die ('Input data error 1412');
-	$my_story = get_story($db, $_REQUEST['id']);
+// set request variables
+$id = $_REQUEST['id'] ?? 0;
+$suit = $_REQUEST['suit'] ?? '';
+$idx = $_REQUEST['idx'] ?? 0;
+if (!is_numeric($idx)) die ("Input data error 703");
+$p = $_REQUEST['p'] ?? 0;
+
+
+$story_count = 0;
+
+
+if ($id) {
+	if (!is_numeric($id)) die ('Input data error 1412');
+	$my_story = get_story($db, $id);
 	$my_title = 'Five Card Story: ' . $my_story['title'];
 	
 	$flickr_tag = $my_story['deck'];
@@ -39,11 +42,11 @@ if ($_REQUEST['id']) {
 	
 	$errors=0;
 	
-	$page_nav = get_story_links($db, $_REQUEST['id']);
+	$page_nav = get_story_links($db, $id);
 
 	
-} elseif ($_REQUEST['suit']) {
-	$suit = $_REQUEST['suit'];
+} elseif ($suit) {
+
 	
     $my_title = $decks[$suit]['title'] . ' Story Gallery';
     
@@ -56,8 +59,7 @@ if ($_REQUEST['id']) {
     
 	$page_nav = get_set_links($idx,$story_count, $b,'show.php?' . $params);
 
-} elseif ($_REQUEST['p']) {
-	$p = $_REQUEST['p'];
+} elseif ($p) {
 	// get all stories that use a specified photo
 
 	$pic = get_image_info($db,$p ,'all');
@@ -94,7 +96,7 @@ include( 'header.php' );
 <h2><?php echo $my_title?></h2>
 
 
-<?php if ($_REQUEST['id']):?>
+<?php if ($id):?>
 <p><?php echo $page_nav?></p>
 <p><em>a <a href="show.php?suit=<?php echo $suit?>"><?php echo $decks[$suit]['title']?> story</a> by <?php echo stripslashes($my_story['name'])?> created <?php echo date("M d Y, h:i:s a", $my_story['created'])?>. <a href="play.php?suit=<?php echo $suit?>">Create a new one</a>!</em></p>
 
@@ -146,12 +148,12 @@ include( 'header.php' );
 <script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
 <a href="http://twitter.com/share" class="twitter-share-button" data-count="none" data-via="">Tweet this story.</a></p>
 
-<p><strong>permalink to story:</strong> http://<?php echo $_SERVER['SERVER_NAME'] . $_SERVER['PHP_SELF'] . '?id=' . $_REQUEST['id']?></p>
+<p><strong>permalink to story:</strong> http://<?php echo $_SERVER['SERVER_NAME'] . $_SERVER['PHP_SELF'] . '?id=' . $id?></p>
 
 
 <?php 
 
-$other_versions = get_other_stories($db, $_REQUEST['id'], $my_story['cards']);
+$other_versions = get_other_stories($db, $id, $my_story['cards']);
 
 if (count($other_versions)) {
 	echo '<h4>other stories made from the same cards</h4><ul>';
@@ -212,7 +214,7 @@ if (count($other_versions)) {
 
 
 
-<?php elseif ($_REQUEST['suit']):?>
+<?php elseif ($suit):?>
 <p align="right"><?php echo $page_nav?></p>
 
 <p>Browse <strong><?php echo $displaycount?></strong> of the  <strong><?php echo $story_count . ' ' . $decks[$suit]['title']?></strong> stories based on the <strong><a href="photos.php?tag=<?php echo $decks[$suit]['tag']?>"><?php echo $cardcount?></strong> flickr photos tagged with <strong><?php echo $decks[$suit]['tag']?></a></strong>...</p>
@@ -232,7 +234,7 @@ foreach ($stories as $item) {
 <p align="right"><?php echo $page_nav?></p>
 
 
-<?php elseif ($_REQUEST['p']):?>
+<?php elseif ($p):?>
 <p align="right"><?php echo $page_nav?></p>
 
 <p class="card"><a href="<?php echo $pic['link']?>" target="_blank" class="drop-shadow"><img src="<?php echo $pic['url']?>" alt="flickr photo by <?php echo $pic['credit']?>" class="captioned"  /></a><br />(<a href="<?php echo $pic['link']?>" target="_blank">flickr photo by <?php echo $pic['credit']?></a>)</p>
