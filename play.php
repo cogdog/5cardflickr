@@ -56,10 +56,11 @@ switch (count($my_ids)) {
 
 	case 0:
 		$my_title = 'Are you ready to play Five Card flickr?';
+		$errors = 0;
 		break;
 	case 5:
 		$my_title =  'Five Card flickr completed story';	
-		$errors=0;
+		$errors = 0;
 	
 		break;
 	default:
@@ -90,6 +91,7 @@ if ($save = 'notsaved') {
 			$errors++;
 			$error_message .= '<li>Tsk tsk tsk, URLs are not permitted. You may want to take your spamming efforts elsewhere.</li>';
 	}
+
 	
 	
 	// captcha check
@@ -119,7 +121,6 @@ if ($save = 'notsaved') {
 		}
 	}
 	
-	$my_title = ($errors) ? 'Ooops please fix a few things...' : 'Your five card flickr story was saved!';
 
 }
 
